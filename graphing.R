@@ -1,0 +1,146 @@
+# libraries
+
+library(ggplot2)
+library(gapminder)
+library(tidyverse)
+
+
+# examples at https://r-graph-gallery.com/index.html
+# plots are made of **layers**
+# a layer consists of data, stat, geom and position
+# a layer must have data, which can be a dataframe/tibble, unlike
+# base R plots which work with vectors, each 'geom' has a default 'stat' and
+# vice versa: geom_bar -> count; geom_point -> identity
+# reference: https://ggplot2.tidyverse.org/reference/#stats
+
+# https://tinyurl.com/ggplotstatref
+
+# ~/Pictures/ggplotstatref-400(1).png
+
+# mostly I recommend you use ggplot2 for graphing but I will show
+# a few base R graphs as examples
+
+gm <- gapminder
+
+gm <- gm %>% 
+  mutate(european = continent == "Europe")
+
+
+
+
+# some base R graphs
+# dot plot
+
+plot(gm$gdpPercap)
+
+# add a line and change colour
+plot(gm$gdpPercap,type="o", col="blue")
+lines(gm$lifeExp*1000, type="o")
+# add title
+title(main="GDP Per Capita Population and life expectancy e10^3", col.main="red", font.main=4)
+
+# selecting data and building a basic graph using ggplot
+# and tidyverse functions
+
+gm %>% 
+  select(gdpPercap,continent,year) %>% 
+  group_by(continent) %>% 
+  filter(year==2007) %>% 
+  ggplot()+
+  geom_boxplot(aes(x=continent, y=gdpPercap))
+
+# some gapminder data graphed
+# http://euclid.psych.yorku.ca/www/psy6135/tutorials/gapminder.html
+
+# we begin a scatter graph definition and store it in 'p'
+# we specify a data frame and a mapping for x and y
+# axes
+
+# we add the geometry for the graph with +
+
+# how might we improve this?  Could some transformation help?
+
+
+p <- ggplot(gm, aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()
+p <- p + scale_x_log10()
+p <- p + geom_point(aes(color=continent))
+# title
+
+
+# too much!  redundant color specification doesn't help!
+# a plot should always have proper labels
+p + geom_point(aes(col=continent, shape=continent, size=lifeExp))
+p <- p + geom_point(aes(col=continent), size=3)
+p <- p+ggtitle("Life Expectancy against GDP Per Capita Population")
+p <- p+xlab("GDP Per Capita in USD")
+p <- p + theme_bw()
+p
+p+theme_classic()
+
+# can try to fit a line to this data
+# the default method for smoothing is lowess and it includes shading for
+# SE
+p + geom_smooth()
+# change the method and remove the SE, reset the line width and color...
+p + geom_point() + geom_smooth(lwd=2, se=FALSE, method="lm", col="red")
+# add color back on the geom_point aes 
+p + geom_point(aes(color = continent)) + geom_smooth()
+# add the continent coloring to the whole graph - it's inherited
+# by all following geoms!
+p + aes(color = continent) + geom_point() + geom_smooth()
+p + aes(color = continent) + geom_point() + geom_smooth(se=F, lwd=2)
+
+# box plots
+# some limitations of point plotting...
+p <- ggplot(gm, aes(continent, lifeExp)) 
+p+geom_point()
+# overplotting
+# trying transparency and jitter...
+p + geom_point(alpha=1/4)
+p + geom_jitter()
+p + geom_jitter(alpha=1/2)
+
+p + geom_boxplot()
+# we could try using both...
+p + geom_jitter() + geom_boxplot()
+p + geom_boxplot(outlier.colour = "red") + geom_jitter(alpha=1/2)
+
+# boxplot with a categorical variable
+# and an alternative, the violin plot
+p <- ggplot(gm, aes(x=continent, y=gdpPercap))
+p + geom_boxplot()
+p + geom_violin(aes(fill=continent))
+
+# extreme values are a problem here
+# try with lifeExp
+
+p <- ggplot(gm, aes(x=european, y=lifeExp))
+p + geom_boxplot()
+p + geom_violin()
+
+
+# Graphing types
+
+## Density graphs
+
+### box plot
+# to help build plots incrementally, we will save each layer and modification in
+# 'p'
+
+p <- ggplot(gm, aes(european, lifeExp, fill = continent))
+
+p + geom_boxplot()
+
+# an alternative to the box plot is a violin plot
+
+p + geom_violin()
+
+### histogram
+
+p <- ggplot(gm, (aes(x=pop)))
+p + geom_histogram()
+
+
+# notes on graphs
+# https://stackoverflow.com/questions/10197738/add-a-footnote-citation-outside-of-plot-area-in-r
